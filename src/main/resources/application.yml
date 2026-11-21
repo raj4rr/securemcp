@@ -1,0 +1,94 @@
+spring:
+  application:
+    name: securemcp
+  profiles:
+    default: http
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/securemcp}
+    username: ${DB_USER:securemcp}
+    password: ${DB_PASSWORD:securemcp-dev-only}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  flyway:
+    enabled: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:false}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SECUREMCP_ISSUER:http://localhost:8080}
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+securemcp:
+  issuer: ${SECUREMCP_ISSUER:http://localhost:8080}
+  audience: ${SECUREMCP_AUDIENCE:securemcp-api}
+  jwks-uri: ${SECUREMCP_JWKS_URI:${securemcp.issuer}/oauth2/jwks}
+  keys:
+    jwk-set-file: ${SECUREMCP_JWK_SET_FILE:}
+  vault:
+    enabled: ${VAULT_ENABLED:false}
+  keycloak:
+    issuer-uri: ${KEYCLOAK_ISSUER:http://localhost:8180/realms/securemcp}
+    jwks-uri: ${KEYCLOAK_JWKS_URI:http://localhost:8180/realms/securemcp/protocol/openid-connect/certs}
+    discovery-uri: ${KEYCLOAK_DISCOVERY_URI:http://localhost:8180/realms/securemcp/.well-known/openid-configuration}
+    audience: ${KEYCLOAK_AUDIENCE:securemcp-api}
+    enabled: ${KEYCLOAK_ENABLED:false}
+  token:
+    access-ttl: 900
+    refresh-ttl: 604800
+    clock-skew-seconds: 60
+  mcp:
+    allowed-origins: ${MCP_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
+    allowed-hosts: ${MCP_ALLOWED_HOSTS:localhost:8080,127.0.0.1:8080}
+---
+spring:
+  config:
+    activate:
+      on-profile: http
+  ai:
+    mcp:
+      server:
+        name: securemcp
+        version: 1.0.0
+        type: SYNC
+        protocol: STREAMABLE
+        stdio: false
+---
+spring:
+  config:
+    activate:
+      on-profile: stdio
+  main:
+    web-application-type: none
+    banner-mode: off
+  ai:
+    mcp:
+      server:
+        name: securemcp
+        version: 1.0.0
+        type: SYNC
+        stdio: true

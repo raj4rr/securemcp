@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "securemcp": {
+      "command": "java",
+      "args": ["-jar", "/absolute/path/securemcp/target/securemcp-1.0.0.jar", "--spring.profiles.active=stdio"],
+      "env": {
+        "DB_URL": "jdbc:postgresql://localhost:5432/securemcp",
+        "DB_USER": "securemcp",
+        "DB_PASSWORD": "REPLACE_ME",
+        "REDIS_HOST": "localhost",
+        "REDIS_PORT": "6379",
+        "REDIS_PASSWORD": "REPLACE_ME",
+        "SECUREMCP_STDIO_SCOPES": "security.read"
+      }
+    }
+  }
+}

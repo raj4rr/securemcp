@@ -1,0 +1,9 @@
+target/
+.env
+.idea/
+*.iml
+.DS_Store
+secrets/
+*.jwk
+*.jwk.json
+securemcp-jwks.json

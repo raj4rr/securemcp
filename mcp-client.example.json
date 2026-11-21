@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "securemcp": {
+      "transport": "streamable-http",
+      "url": "http://localhost:8080/mcp",
+      "headers": {
+        "Authorization": "Bearer REPLACE_WITH_ACCESS_TOKEN"
+      }
+    }
+  }
+}

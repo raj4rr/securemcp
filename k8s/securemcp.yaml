@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: securemcp-config
+  labels: {app: securemcp}
+data:
+  SPRING_PROFILES_ACTIVE: "http"
+  SERVER_PORT: "8080"
+  REDIS_SSL_ENABLED: "true"
+  SECUREMCP_ISSUER: "https://securemcp.example.com"
+  SECUREMCP_AUDIENCE: "securemcp-api"
+  SECUREMCP_JWKS_URI: "http://securemcp:8080/oauth2/jwks"
+  SECUREMCP_ALLOW_EPHEMERAL_KEYS: "false"
+  VAULT_ENABLED: "true"
+  VAULT_ADDR: "https://vault.vault.svc:8200"
+  VAULT_JWK_PATH: "secret/data/securemcp/signing"
+  KEYCLOAK_ENABLED: "false"
+  MCP_ALLOWED_HOSTS: "securemcp.example.com"
+  MCP_ALLOWED_ORIGINS: "https://console.example.com"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: securemcp
+  labels: {app: securemcp}
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: securemcp}
+  template:
+    metadata:
+      labels: {app: securemcp}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: securemcp
+          image: your-registry/securemcp:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports: [{name: http, containerPort: 8080}]
+          envFrom:
+            - configMapRef: {name: securemcp-config}
+            - secretRef: {name: securemcp-secrets}
+          env:
+            - name: DB_URL
+              valueFrom: {secretKeyRef: {name: securemcp-secrets, key: DB_URL}}
+            - name: DB_USER
+              valueFrom: {secretKeyRef: {name: securemcp-secrets, key: DB_USER}}
+            - name: DB_PASSWORD
+              valueFrom: {secretKeyRef: {name: securemcp-secrets, key: DB_PASSWORD}}
+            - name: REDIS_HOST
+              valueFrom: {secretKeyRef: {name: securemcp-secrets, key: REDIS_HOST}}
+            - name: REDIS_PASSWORD
+              valueFrom: {secretKeyRef: {name: securemcp-secrets, key: REDIS_PASSWORD}}
+            - name: VAULT_TOKEN
+              valueFrom: {secretKeyRef: {name: securemcp-secrets, key: VAULT_TOKEN}}
+            - name: SECUREMCP_BOOTSTRAP_CLIENT_SECRET
+              valueFrom: {secretKeyRef: {name: securemcp-secrets, key: SECUREMCP_BOOTSTRAP_CLIENT_SECRET}}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "2", memory: 2Gi}
+          startupProbe:
+            httpGet: {path: /actuator/health, port: http}
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet: {path: /actuator/health/readiness, port: http}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /actuator/health/liveness, port: http}
+            periodSeconds: 20
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 128Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: securemcp
+spec:
+  selector: {app: securemcp}
+  ports: [{name: http, port: 8080, targetPort: http}]
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: securemcp
+spec:
+  scaleTargetRef: {apiVersion: apps/v1, kind: Deployment, name: securemcp}
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: {type: Utilization, averageUtilization: 70}

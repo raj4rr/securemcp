@@ -1,0 +1,12 @@
+package com.securemcp.mcp;
+import com.securemcp.identity.IdentityService; import com.securemcp.authorization.TenantContext;
+import org.springframework.ai.tool.annotation.Tool; import org.springframework.ai.tool.annotation.ToolParam; import org.springframework.security.access.prepost.PreAuthorize; import org.springframework.stereotype.Component; import java.util.*;
+@Component public class IdentityMcpTools {
+ private final IdentityService identity; private final TenantContext tenant; public IdentityMcpTools(IdentityService i,TenantContext t){identity=i;tenant=t;}
+ @Tool(description="Check whether the authenticated principal has a permission. Does not accept caller-supplied subject identity.")
+ @PreAuthorize("hasAuthority('SCOPE_security.read')") public Map<String,Object> checkPermission(@ToolParam(description="Permission key such as documents.read") String permission){McpSecurity.requireScope("security.read");var a=org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();String subject=a==null?null:a.getName();return Map.of("permission",permission,"allowed",identity.hasPermission(subject,permission),"principal",subject==null?"anonymous":subject);}
+ @Tool(description="List users in the authenticated tenant. Cross-tenant access is rejected.")
+ @PreAuthorize("hasAuthority('SCOPE_identity.read')") public List<Map<String,Object>> listTenantUsers(@ToolParam(description="Tenant UUID matching the authenticated tenant claim") String tenantId){McpSecurity.requireScope("identity.read");return identity.listUsers(tenant.requireTenant(UUID.fromString(tenantId)));}
+ @Tool(description="Assign a role to a user in the authenticated tenant. Requires identity.write scope and explicit confirmation; cross-tenant assignments are rejected.")
+ @PreAuthorize("hasAuthority('SCOPE_identity.write')") public Map<String,Object> assignRole(@ToolParam(description="Tenant UUID matching authenticated tenant") String tenantId,@ToolParam(description="User UUID") String userId,@ToolParam(description="Role UUID") String roleId,@ToolParam(description="Must be true to confirm role assignment") boolean confirm){McpSecurity.requireScope("identity.write");if(!confirm)return Map.of("assigned",false,"reason","confirmation_required");UUID scopedTenant=tenant.requireTenant(UUID.fromString(tenantId));identity.assignRole(scopedTenant,UUID.fromString(userId),UUID.fromString(roleId));return Map.of("assigned",true,"userId",userId,"roleId",roleId);}
+}

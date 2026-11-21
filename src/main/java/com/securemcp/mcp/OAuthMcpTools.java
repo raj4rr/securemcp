@@ -1,0 +1,9 @@
+package com.securemcp.mcp;
+import com.securemcp.oauth.OAuthManagementService; import org.springframework.ai.tool.annotation.*; import org.springframework.security.access.prepost.PreAuthorize; import org.springframework.security.core.Authentication; import org.springframework.security.core.context.SecurityContextHolder; import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken; import org.springframework.stereotype.Component; import java.util.Map;
+@Component public class OAuthMcpTools {
+ private final OAuthManagementService oauth; public OAuthMcpTools(OAuthManagementService o){oauth=o;}
+ @Tool(description="Introspect the authenticated caller's own SecureMCP access token. Does not accept or expose arbitrary bearer tokens.")
+ @PreAuthorize("hasAuthority('SCOPE_security.read')") public Map<String,Object> oauthIntrospect(){McpSecurity.requireScope("security.read");Authentication a=SecurityContextHolder.getContext().getAuthentication();if(!(a instanceof JwtAuthenticationToken jwt))return Map.of("active",false,"reason","caller_is_not_authenticated_with_a_jwt");return oauth.introspect(jwt.getToken().getTokenValue());}
+ @Tool(description="Revoke the authenticated caller's own SecureMCP access token. This does not revoke another user's token.")
+ @PreAuthorize("hasAuthority('SCOPE_security.write')") public Map<String,Object> oauthRevoke(@ToolParam(description="Must be true to confirm revoking your current access token") boolean confirm){McpSecurity.requireScope("security.write");if(!confirm)return Map.of("revoked",false,"reason","confirmation_required");Authentication a=SecurityContextHolder.getContext().getAuthentication();if(!(a instanceof JwtAuthenticationToken jwt))return Map.of("revoked",false,"reason","caller_is_not_authenticated_with_a_jwt");return oauth.revoke(jwt.getToken().getTokenValue());}
+}
