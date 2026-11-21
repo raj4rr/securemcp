@@ -1,6 +1,8 @@
 package com.securemcp.config;
 import org.springframework.beans.factory.annotation.Value; import org.springframework.context.annotation.*;
-import org.springframework.security.oauth2.core.*; import org.springframework.security.oauth2.jwt.*;
+import org.springframework.security.oauth2.core.*;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.*;
 @Configuration public class JwtDecoderConfig {
  @Bean JwtDecoder jwtDecoder(@Value("${securemcp.issuer}") String issuer,@Value("${securemcp.jwks-uri}") String jwks,@Value("${securemcp.audience}") String audience){
   NimbusJwtDecoder decoder=NimbusJwtDecoder.withJwkSetUri(jwks).jwsAlgorithm(SignatureAlgorithm.RS256).build();

@@ -4,9 +4,9 @@ spring:
   profiles:
     default: http
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/securemcp}
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/securemcp}
     username: ${DB_USER:securemcp}
-    password: ${DB_PASSWORD:securemcp-dev-only}
+    password: ${DB_PASSWORD:securemcp}
   jpa:
     hibernate:
       ddl-auto: none

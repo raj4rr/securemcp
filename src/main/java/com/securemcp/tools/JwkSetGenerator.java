@@ -1,5 +1,8 @@
 package com.securemcp.tools;
-import com.nimbusds.jose.JWSAlgorithm; import com.nimbusds.jose.jwk.*; import java.security.*; import java.security.interfaces.*; import java.nio.file.*; import java.util.*;
+import com.nimbusds.jose.JWSAlgorithm; import com.nimbusds.jose.jwk.*;
+import com.nimbusds.jose.jwk.RSAKey;
+
+import java.security.*; import java.security.interfaces.*; import java.nio.file.*; import java.util.*;
 /** Local key bootstrap utility. Keep generated private JWK material in Vault or a secret manager. */
 public final class JwkSetGenerator {
  private JwkSetGenerator(){}

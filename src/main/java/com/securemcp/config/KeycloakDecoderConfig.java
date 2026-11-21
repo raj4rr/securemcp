@@ -1,6 +1,8 @@
 package com.securemcp.config;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty; import org.springframework.beans.factory.annotation.Value; import org.springframework.context.annotation.*;
-import org.springframework.security.oauth2.core.*; import org.springframework.security.oauth2.jwt.*;
+import org.springframework.security.oauth2.core.*;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.*;
 @Configuration @ConditionalOnProperty(prefix="securemcp.keycloak",name="enabled",havingValue="true")
 public class KeycloakDecoderConfig {
  @Bean(name="keycloakJwtDecoder") JwtDecoder keycloakJwtDecoder(@Value("${securemcp.keycloak.issuer-uri}") String issuer,@Value("${securemcp.keycloak.jwks-uri}") String jwks,@Value("${securemcp.keycloak.audience}") String audience){
