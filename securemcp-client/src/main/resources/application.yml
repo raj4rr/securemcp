@@ -1,0 +1,15 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: securemcp-client
+
+securemcp:
+  server:
+    base-url: http://localhost:8080
+    token-endpoint: http://localhost:8080/oauth2/token
+    mcp-endpoint: http://localhost:8080/mcp
+    client-id: securemcp-local-client
+    client-secret: securemcp
+    scope: security.read identity.read identity.write platform.admin
