@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureMCP Spring AI Client & Security Chatbot</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --primary: #38bdf8;
+      --primary-hover: #0ea5e9;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+      --user-msg: #2563eb;
+      --bot-msg: #1e293b;
+      --code-bg: #0b1120;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 320px;
+      background: #090d16;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 1.25rem;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+    .sub-brand {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+    }
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      margin-bottom: 1.25rem;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+    .status-dot.disconnected {
+      background: #ef4444;
+      box-shadow: 0 0 8px #ef4444;
+    }
+    .sidebar-section {
+      margin-bottom: 1.25rem;
+      flex: 1;
+      overflow-y: auto;
+    }
+    .sidebar-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+    .quick-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.15s ease;
+      text-align: left;
+    }
+    .quick-btn:hover {
+      background: var(--card-bg);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .tools-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .tool-pill {
+      font-size: 0.75rem;
+      padding: 0.35rem 0.5rem;
+      background: #1e293b;
+      border-radius: 4px;
+      color: #93c5fd;
+      border: 1px solid #3b82f633;
+      font-family: monospace;
+      cursor: pointer;
+    }
+    .tool-pill:hover {
+      border-color: var(--primary);
+    }
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: var(--bg);
+    }
+    .chat-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f172a;
+    }
+    .chat-header h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .badge-stack {
+      display: flex;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+    }
+    .tech-badge {
+      background: #1e293b;
+      color: #38bdf8;
+      border: 1px solid #334155;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+    .messages {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .message {
+      display: flex;
+      gap: 0.85rem;
+      max-width: 80%;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+    .message.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    .message.bot {
+      align-self: flex-start;
+    }
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .user .avatar {
+      background: var(--user-msg);
+      color: #fff;
+    }
+    .bot .avatar {
+      background: #334155;
+      color: var(--primary);
+    }
+    .bubble {
+      padding: 0.85rem 1.15rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .user .bubble {
+      background: var(--user-msg);
+      color: #fff;
+      border-color: transparent;
+    }
+    .bot .bubble {
+      background: var(--bot-msg);
+      color: var(--text);
+    }
+    .bubble pre {
+      background: var(--code-bg);
+      padding: 0.75rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 0.6rem 0;
+      border: 1px solid #1e293b;
+      font-size: 0.85rem;
+    }
+    .bubble code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #38bdf8;
+    }
+    .input-bar {
+      padding: 1.25rem 1.5rem;
+      border-top: 1px solid var(--border);
+      background: #0f172a;
+      display: flex;
+      gap: 0.75rem;
+    }
+    .input-bar input {
+      flex: 1;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-bar input:focus {
+      border-color: var(--primary);
+    }
+    .send-btn {
+      background: var(--primary);
+      color: #0f172a;
+      border: none;
+      border-radius: 8px;
+      padding: 0 1.25rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.15s;
+    }
+    .send-btn:hover {
+      background: var(--primary-hover);
+    }
+    .tool-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      background: #0369a1;
+      color: #e0f2fe;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="brand">
+      <i class="fa-solid fa-cube"></i>
+      <span>SecureMCP Client</span>
+    </div>
+    <div class="sub-brand">Java 21 • Spring Boot 3.5 • Spring AI</div>
+
+    <div class="status-badge" id="status-container">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">Connecting to SecureMCP...</span>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Quick Actions</div>
+      <button class="quick-btn" onclick="sendPrompt('Introspect my token')">
+        <i class="fa-solid fa-id-card-clip"></i> Introspect Token
+      </button>
+      <button class="quick-btn" onclick="sendPrompt('Show recent audit logs')">
+        <i class="fa-solid fa-list-check"></i> Security Audit Logs
+      </button>
+      <button class="quick-btn" onclick="sendPrompt('Check permission security.read')">
+        <i class="fa-solid fa-user-lock"></i> Check Permission
+      </button>
+      <button class="quick-btn" onclick="sendPrompt('Validate current JWT')">
+        <i class="fa-solid fa-key"></i> Validate JWT Token
+      </button>
+      <button class="quick-btn" onclick="sendPrompt('Discover Keycloak OIDC')">
+        <i class="fa-solid fa-network-wired"></i> Keycloak OIDC Discovery
+      </button>
+      <button class="quick-btn" onclick="sendPrompt('List tools')">
+        <i class="fa-solid fa-screwdriver-wrench"></i> List All MCP Tools
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Registered MCP Tools (<span id="tool-count">...</span>)</div>
+      <div class="tools-list" id="tools-list">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Area -->
+  <div class="chat-container">
+    <div class="chat-header">
+      <h2>Spring AI Security Chatbot Assistant</h2>
+      <div class="badge-stack">
+        <span class="tech-badge">Spring AI MCP</span>
+        <span class="tech-badge">OAuth2 Client</span>
+        <span class="tech-badge">Port 8081</span>
+      </div>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="message bot">
+        <div class="avatar"><i class="fa-solid fa-cube"></i></div>
+        <div class="bubble">
+          <strong>Welcome to the SecureMCP Spring AI Client Chatbot!</strong><br><br>
+          This client application connects to the SecureMCP server via OAuth2 client credentials and Model Context Protocol (Streamable HTTP SSE).
+          <br><br>
+          Click any quick action on the left or type your security questions below!
+        </div>
+      </div>
+    </div>
+
+    <form class="input-bar" id="chat-form" onsubmit="handleSubmit(event)">
+      <input type="text" id="user-input" placeholder="Ask a question or invoke an MCP tool..." autocomplete="off">
+      <button type="submit" class="send-btn" id="send-btn">
+        <span>Send</span> <i class="fa-solid fa-paper-plane"></i>
+      </button>
+    </form>
+  </div>
+
+  <script>
+    async function updateStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        const dot = document.getElementById('status-dot');
+        const text = document.getElementById('status-text');
+        const toolCount = document.getElementById('tool-count');
+        const toolsList = document.getElementById('tools-list');
+
+        if (data.connected) {
+          dot.classList.remove('disconnected');
+          text.textContent = `Connected (${data.toolsCount} Tools)`;
+          toolCount.textContent = data.toolsCount;
+          toolsList.innerHTML = data.tools.map(t => 
+            `<div class="tool-pill" onclick="sendPrompt('call ${t} {}')">${t}</div>`
+          ).join('');
+        } else {
+          dot.classList.add('disconnected');
+          text.textContent = 'Disconnected';
+          toolCount.textContent = '0';
+        }
+      } catch (err) {
+        console.error("Status check failed", err);
+      }
+    }
+
+    function appendMessage(sender, htmlContent, toolCall = null) {
+      const messages = document.getElementById('messages');
+      const div = document.createElement('div');
+      div.className = `message ${sender}`;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.innerHTML = sender === 'user' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-cube"></i>';
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+
+      if (toolCall) {
+        const badge = document.createElement('div');
+        badge.className = 'tool-badge';
+        badge.textContent = `MCP Tool: ${toolCall.name}`;
+        bubble.appendChild(badge);
+      }
+
+      const content = document.createElement('div');
+      content.innerHTML = htmlContent;
+      bubble.appendChild(content);
+
+      div.appendChild(avatar);
+      div.appendChild(bubble);
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    async function sendPrompt(text) {
+      const input = document.getElementById('user-input');
+      input.value = text;
+      document.getElementById('chat-form').dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('user-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      appendMessage('user', text);
+      input.value = '';
+
+      const sendBtn = document.getElementById('send-btn');
+      sendBtn.disabled = true;
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
+        const data = await res.json();
+        const html = marked.parse(data.reply);
+        appendMessage('bot', html, data.toolCall);
+      } catch (err) {
+        appendMessage('bot', `<span style="color:#f87171">Error: ${err.message}</span>`);
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    }
+
+    updateStatus();
+    setInterval(updateStatus, 10000);
+  </script>
+</body>
+</html>
