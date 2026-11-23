@@ -9,6 +9,7 @@ SecureMCP is a Java 21 / Spring Boot 3.5 platform that exposes security and iden
 | Area | Implementation |
 |---|---|
 | MCP | Spring AI MCP tool callbacks backed by the official MCP Java SDK; Streamable HTTP and STDIO profiles |
+| Chatbot Clients | Standalone **Java Spring Boot / Spring AI** client (`securemcp-client`) & **Python** client (`client`) with Web UIs |
 | OAuth 2.0 / OIDC | Spring Authorization Server; JDBC-backed clients, authorizations and consents; client credentials and authorization-code + PKCE |
 | JWT | RS256 signing, JWKS publication, issuer/audience/expiry validation, untrusted decode, Redis `jti` revocation |
 | Key management | JWK-set file, PKCS#8/X.509 PEM, or Vault KV v2 JWK-set retrieval; one active private key plus previous public keys |
@@ -92,6 +93,32 @@ curl http://localhost:8080/api/public/status
 ```
 
 Flyway applies `V1`, `V2`, and `V3` automatically. Hibernate schema generation is disabled.
+
+## 4.1 Running the Chatbot Clients
+
+Two client applications are provided to interact with the SecureMCP server via Streamable HTTP MCP and OAuth 2.0:
+
+### A. Java Spring Boot + Spring AI Client (`securemcp-client`)
+A standalone Maven project using Java 21, Spring Boot 3.5.7, and Spring AI 1.1.2.
+- **Port:** `8081`
+- **Details:** See [securemcp-client/README.md](file:///Users/rajesh/IdeaProjects/securemcp%202/securemcp-client/README.md)
+- **Run:**
+  ```bash
+  mvn -f securemcp-client/pom.xml spring-boot:run
+  ```
+  Open **http://localhost:8081** to chat and run security operations.
+
+### B. Python / FastAPI Client (`client`)
+A Python 3 client with FastAPI, Streamable SSE MCP connector, and a responsive web UI.
+- **Port:** `3000`
+- **Details:** See [client/README.md](file:///Users/rajesh/IdeaProjects/securemcp%202/client/README.md)
+- **Run:**
+  ```bash
+  pip install fastapi uvicorn httpx requests
+  python3 -m uvicorn app:app --app-dir client --host 127.0.0.1 --port 3000
+  ```
+  Open **http://localhost:3000** or use the CLI via `python3 client/cli_chatbot.py`.
+
 
 ## 5. Bootstrap a tenant and first application client
 
