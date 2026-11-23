@@ -20,40 +20,40 @@ public class OAuthManagementService {
     }
 
 
- public Map<String, Object> introspect(String token) {
-  var authorization = authorizations.findByToken(
-          token, OAuth2TokenType.ACCESS_TOKEN);
+    public Map<String, Object> introspect(String token) {
+        var authorization = authorizations.findByToken(
+                token, OAuth2TokenType.ACCESS_TOKEN);
 
-  if (authorization == null) {
-   return Map.of("active", false);
-  }
+        if (authorization == null) {
+            return Map.of("active", false);
+        }
 
-  var access = authorization.getAccessToken();
+        var access = authorization.getAccessToken();
 
-  boolean active = access != null
-          && !access.isExpired()
-          && !access.isInvalidated();
+        boolean active = access != null
+                && !access.isExpired()
+                && !access.isInvalidated();
 
-  if (!active) {
-   return Map.of("active", false);
-  }
+        if (!active) {
+            return Map.of("active", false);
+        }
 
-  var client = clients.findById(
-          authorization.getRegisteredClientId());
+        var client = clients.findById(
+                authorization.getRegisteredClientId());
 
-  return Map.of(
-          "active", true,
-          "sub", authorization.getPrincipalName(),
-          "client_id", client == null
-                  ? "unknown"
-                  : client.getClientId(),
-          "scope", String.join(
-                  " ",
-                  access.getToken().getScopes()),
-          "expires_at", String.valueOf(
-                  access.getToken().getExpiresAt())
-  );
- }
+        return Map.of(
+                "active", true,
+                "sub", authorization.getPrincipalName(),
+                "client_id", client == null
+                        ? "unknown"
+                        : client.getClientId(),
+                "scope", String.join(
+                        " ",
+                        access.getToken().getScopes()),
+                "expires_at", String.valueOf(
+                        access.getToken().getExpiresAt())
+        );
+    }
 
 
     @org.springframework.transaction.annotation.Transactional
